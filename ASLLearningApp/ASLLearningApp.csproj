@@ -26,5 +26,22 @@
       <LastGenOutput>ASLProgramDBDataSet.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
+  
+  <ItemGroup>
+	<None Update="scripts\WebcamScript.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+	<None Update="scripts\MultithreadController.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
+  <ItemGroup>
+	<None Update="scripts\asl_gesture_recognizer.task">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

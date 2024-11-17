@@ -89,21 +89,36 @@ namespace ASLLearningApp
         {
             Console.WriteLine("Webcam script starting (C#)...");
             string currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
             // Construct the path to WebcamScript.py using a relative path
-            string webcamScriptPath = Path.Combine(currentDirectory, "WebcamScript.py");
+            string webcamScriptPath = Path.Combine(currentDirectory, @"scripts");
+
+            // Set the PythonDLL path
             Runtime.PythonDLL = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python\Python310\python310.dll";
+
             // Setup the Python engine to allow the C# app to communicate with the Python script.
             PythonEngine.Initialize();
             dynamic os = Py.Import("os");
             dynamic sys = Py.Import("sys");
+
+            // Add the directory containing the script to sys.path
             sys.path.append(webcamScriptPath);
+
             isRunning = true;
+
             // Use the Python Global Interpreter Lock to execute the Python script.
             using (Py.GIL())
             {
-                // Run the Python script.
-                var pythonScript = Py.Import(scriptName);
-                pythonScript.InvokeMethod("runScriptFromCS");
+                try
+                {
+                    // Run the Python script.
+                    var pythonScript = Py.Import(scriptName);
+                    pythonScript.InvokeMethod("runScriptFromCS");
+                }
+                catch (PythonException ex)
+                {
+                    MessageBox.Show("An error occurred while running the Python script: " + ex.Message);
+                }
             }
             // Shut down the Python engine once the program is finished.
             PythonEngine.Shutdown();
@@ -121,7 +136,7 @@ namespace ASLLearningApp
         public void Exit()
         {
             // Writes to a file to communicate to the Python program to shut down.
-            string filePath = @".\MultithreadController.txt";
+            string filePath = @".\scripts\MultithreadController.txt";
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 writer.Write("End");
@@ -132,7 +147,7 @@ namespace ASLLearningApp
 
         public void Enter()
         {
-            string filePath = @".\MultithreadController.txt";
+            string filePath = @".\scripts\MultithreadController.txt";
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 writer.Write("");
