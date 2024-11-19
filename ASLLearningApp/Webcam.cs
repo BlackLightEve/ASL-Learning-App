@@ -15,6 +15,7 @@ using System.Reflection;
 
 namespace ASLLearningApp
 {
+    // Starting branch to offload webcam from Python to C#
     public partial class Webcam : UserControl
     {
         private bool isRunning = false;
