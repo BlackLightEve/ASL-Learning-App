@@ -180,7 +180,7 @@ namespace ASLLearningApp
             pbrNextCharTimer.Size = new Size(rtbNextChar.Width, 15);
             this.Controls.Add(pbrNextCharTimer);
             webcam.Location = new Point(webcam.Location.X, webcam.Location.Y + webcam.Height + pbrNextCharTimer.Height);
-            webcam.Visible = false;
+            webcam.Visible = true;
         }
 
         // Handle button presses to modify text

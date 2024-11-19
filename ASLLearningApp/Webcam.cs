@@ -12,6 +12,8 @@ using Python.Runtime;
 using System.IO;
 using System.IO.Pipes;
 using System.Reflection;
+using OpenCvSharp;
+using OpenCvSharp.Extensions;
 
 namespace ASLLearningApp
 {
@@ -20,6 +22,12 @@ namespace ASLLearningApp
     {
         private bool isRunning = false;
         private bool pipeInUse = false;
+
+        // OpenCVSharp variables for controlling webcam
+        private VideoCapture capture;
+        private Task captureTask;
+        private bool capturing = false;
+
         Thread dataReciever;
         // Delegate for the event for when the symbol is changed
         public delegate void SignedSymbolChangedHandler(object sender, string symbol);
@@ -43,17 +51,29 @@ namespace ASLLearningApp
         private void Setup()
         {
             // Set the isRunning variable to true, a method later will wait for this value to become false before closing the user control.
-            isRunning = true;
-            Enter();
+/*            isRunning = true;
+            Enter();*/
+
+            // Intiialize the webcam
+            capture = new VideoCapture(0);
+            if (!capture.IsOpened())
+            {
+                MessageBox.Show("Failed to open webcam.");
+                return;
+            }
+            capturing = true;
+            captureTask = Task.Run(() => CaptureFrames());
+
             // Create a new thread on which to handle running the Python script.
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true; // Set as background thread
                 RunScript("WebcamScript");
             }).Start();
+
             // Create a named pipe server.
-            dataReciever = new Thread(ReceiveFingerspelling);
-            dataReciever.Start();
+            /*dataReciever = new Thread(ReceiveFingerspelling);
+            dataReciever.Start();*/
         }
 
         // Method to recieve any finger spelling gesture detected by the Python script.
@@ -136,6 +156,7 @@ namespace ASLLearningApp
         // Method to safely begin the exit of the Python script.
         public void Exit()
         {
+            capturing = false;
             // Writes to a file to communicate to the Python program to shut down.
             string filePath = @".\scripts\MultithreadController.txt";
             using (StreamWriter writer = new StreamWriter(filePath))
@@ -144,6 +165,7 @@ namespace ASLLearningApp
             }
             // Calls a method to wait for both the main Python script and the pipe to shut down and close successfully.
             int result = Task.Run(async () => await WaitForShutdown()).Result;
+            capturing = false;
         }
 
         public void Enter()
@@ -163,6 +185,43 @@ namespace ASLLearningApp
             if (pipeInUse)
                 System.Threading.SpinWait.SpinUntil(() => !pipeInUse);
             return (1);
+        }
+
+        // Start a webcam
+        private void InitializeWebcam()
+        {
+            capture = new VideoCapture(0);
+            if (!capture.IsOpened())
+            {
+                MessageBox.Show("Failed to open webcam.");
+                return;
+            }
+            capturing = true;
+            captureTask = Task.Run(() => CaptureFrames());
+        }
+
+        // Capturing webcam frames
+        private void CaptureFrames()
+        {
+            while (capturing)
+            {
+                using (Mat frame = new Mat())
+                {
+                    capture.Read(frame);
+                    if (frame.Empty()) continue;
+
+                    Bitmap image = BitmapConverter.ToBitmap(frame);
+
+                    pbWebcam.Invoke(new Action(() =>
+                    {
+                        pbWebcam.Image?.Dispose();
+                        pbWebcam.Image = image;
+                    }));
+
+                    Task.Delay(30).Wait();
+                }
+            }
+            capture.Dispose();
         }
     }
 }
